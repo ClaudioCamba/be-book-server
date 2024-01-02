@@ -17,12 +17,7 @@
     "authorId": 7,
     "isFiction": true
   },
-  {
-    "bookId": 4,
-    "bookTitle": "Emma",
-    "authorId": 14,
-    "isFiction": true
-  },
+  { "bookId": 4, "bookTitle": "Emma", "authorId": 14, "isFiction": true },
   {
     "bookId": 5,
     "bookTitle": "Nineteen Eighty-Four: A Novel",
@@ -47,12 +42,7 @@
     "authorId": 11,
     "isFiction": true
   },
-  {
-    "bookId": 9,
-    "bookTitle": "Dune",
-    "authorId": 10,
-    "isFiction": true
-  },
+  { "bookId": 9, "bookTitle": "Dune", "authorId": 10, "isFiction": true },
   {
     "bookId": 10,
     "bookTitle": "Charlie and the Chocolate Factory",
@@ -87,6 +77,12 @@
     "bookId": 15,
     "bookTitle": "The Da Vinci Code",
     "authorId": 1,
+    "isFiction": true
+  },
+  {
+    "bookId": 16,
+    "bookTitle": "Lord of the Rings",
+    "authorId": 37,
     "isFiction": true
   }
 ]

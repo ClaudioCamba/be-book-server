@@ -19,24 +19,84 @@ const server = http.createServer((request, response) => {
     readContent("./data/books.json").then((data) => {
       const books = JSON.parse(data);
 
-      if (url === "/api/books"){
+      if (url === "/api/books") {
         response.statusCode = 200;
         response.setHeader("Content-Type", "application/json");
         response.write(JSON.stringify({ books: books }));
         response.end();
       } else {
-        const bookId = url.split("/")[url.split("/").length - 1];
-        
-        books.forEach((book) => { 
-          if (book.bookId === Number(bookId)){
+        if (url.includes("/author")) {
+          const bookId = url.split("/")[url.split("/").length - 2];
+          let getAuthorId;
+          books.forEach((book) => {
+            if (book.bookId === Number(bookId)) {
+              getAuthorId = book.authorId;
+            }
+          });
+          readContent("./data/authors.json").then((data) => {
+            const authors = JSON.parse(data);
+            const doesntExist = authors.every((author) => {
+              return author.authorId !== getAuthorId;
+            });
+            if (doesntExist) {
+              response.statusCode = 404;
+              response.end();
+            } else {
+              authors.forEach((author) => {
+                if (author.authorId === getAuthorId) {
+                  response.statusCode = 200;
+                  response.setHeader("Content-Type", "application/json");
+                  response.write(JSON.stringify({ author: author }));
+                  response.end();
+                }
+              });
+            }
+          });
+        } else {
+          const bookId = url.split("/")[url.split("/").length - 1];
+
+          books.forEach((book) => {
+            if (book.bookId === Number(bookId)) {
+              response.statusCode = 200;
+              response.setHeader("Content-Type", "application/json");
+              response.write(JSON.stringify({ book: book }));
+              response.end();
+            }
+          });
+        }
+      }
+    });
+  }
+
+  if (url === "/api/books" && method === "POST") {
+    let body = "";
+    request.on("data", (packet) => {
+      body += packet;
+    });
+    request.on("end", () => {
+      readContent("./data/books.json").then((fileContents) => {
+        const allBooks = JSON.parse(fileContents);
+        const newBook = JSON.parse(body);
+        const doesntExist = allBooks.every((book) => {
+          return book.bookId !== newBook.bookId;
+        });
+        if (doesntExist) {
+          allBooks.push(JSON.parse(body));
+          fs.writeFile(
+            "./data/books.json",
+            JSON.stringify(allBooks),
+            "utf8"
+          ).then(() => {
             response.statusCode = 200;
             response.setHeader("Content-Type", "application/json");
-            response.write(JSON.stringify({ book: book }));
+            response.write(JSON.stringify({ books: allBooks }));
             response.end();
-          }
-        })
-      }
-
+          });
+        } else {
+          response.statusCode = 409;
+          response.end();
+        }
+      });
     });
   }
 
@@ -55,6 +115,3 @@ server.listen(8080, (err) => {
   if (err) console.log(err);
   else console.log("server is listening on 8080...");
 });
-
-// GET /api/books
-// Add a GET /api/books endpoint that responds with a status 200 and a JSON object that has a key of books with a value of the array of books from the ./data/books.json file.
