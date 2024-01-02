@@ -6,13 +6,20 @@ const readContent = async (filename) => {
   return getInfo;
 };
 
+const responseFunc = (response, status,  toWrite) => {
+  response.statusCode = status;
+  if (toWrite){
+    response.setHeader("Content-Type", "application/json");
+    response.write(toWrite);
+  }
+  response.end();
+}
+
+
 const server = http.createServer((request, response) => {
   const { method, url } = request;
   if (url === "/api" && method === "GET") {
-    response.statusCode = 200;
-    response.setHeader("Content-Type", "application/json");
-    response.write(JSON.stringify({ message: "Hello!" }));
-    response.end();
+    responseFunc(response, 200, JSON.stringify({ message: "Hello!" }));
   }
 
   if (url.includes("/api/books") && method === "GET") {
@@ -20,10 +27,8 @@ const server = http.createServer((request, response) => {
       const books = JSON.parse(data);
 
       if (url === "/api/books") {
-        response.statusCode = 200;
-        response.setHeader("Content-Type", "application/json");
-        response.write(JSON.stringify({ books: books }));
-        response.end();
+        responseFunc(response, 200, JSON.stringify({ books: books }));
+ 
       } else {
         if (url.includes("/author")) {
           const bookId = url.split("/")[url.split("/").length - 2];
@@ -39,15 +44,11 @@ const server = http.createServer((request, response) => {
               return author.authorId !== getAuthorId;
             });
             if (doesntExist) {
-              response.statusCode = 404;
-              response.end();
+              responseFunc(response, 404, null);
             } else {
               authors.forEach((author) => {
                 if (author.authorId === getAuthorId) {
-                  response.statusCode = 200;
-                  response.setHeader("Content-Type", "application/json");
-                  response.write(JSON.stringify({ author: author }));
-                  response.end();
+                  responseFunc(response, 200, JSON.stringify({ author: author }));
                 }
               });
             }
@@ -60,14 +61,11 @@ const server = http.createServer((request, response) => {
               (book) => book.isFiction === isFiction
             );
             if (filteredBooks.length > 0) {
-              response.statusCode = 200;
-              response.setHeader("Content-Type", "application/json");
-              response.write(JSON.stringify({ book: filteredBooks }));
-              response.end();
+              responseFunc(response, 200, JSON.stringify({ book: filteredBooks }));
             }
           }
-            response.statusCode = 204;
-            response.end();
+
+          responseFunc(response, 204, null);
 
         } else {
           const bookId = url.split("/")[url.split("/").length - 1];
@@ -75,15 +73,11 @@ const server = http.createServer((request, response) => {
             return book.bookId !== Number(bookId);
           });
           if (doesntExist) {
-            response.statusCode = 404;
-            response.end();
+            responseFunc(response, 404, null);
           } else {
             books.forEach((book) => {
               if (book.bookId === Number(bookId)) {
-                response.statusCode = 200;
-                response.setHeader("Content-Type", "application/json");
-                response.write(JSON.stringify({ book: book }));
-                response.end();
+                responseFunc(response, 200, JSON.stringify({ book: book }));
               }
             });
           }
@@ -105,8 +99,7 @@ const server = http.createServer((request, response) => {
         }
       );
       if (!hasKeys) {
-        response.statusCode = 400;
-        response.end();
+        responseFunc(response, 400, null);
       } else {
         readContent("./data/books.json").then((fileContents) => {
           const allBooks = JSON.parse(fileContents);
@@ -120,14 +113,10 @@ const server = http.createServer((request, response) => {
               JSON.stringify(allBooks),
               "utf8"
             ).then(() => {
-              response.statusCode = 200;
-              response.setHeader("Content-Type", "application/json");
-              response.write(JSON.stringify({ books: newBook }));
-              response.end();
+              responseFunc(response, 200, JSON.stringify({ books: newBook }));
             });
           } else {
-            response.statusCode = 409;
-            response.end();
+            responseFunc(response, 409, null);
           }
         });
       }
@@ -137,10 +126,7 @@ const server = http.createServer((request, response) => {
   if (url === "/api/authors" && method === "GET") {
     readContent("./data/authors.json").then((data) => {
       const authors = JSON.parse(data);
-      response.statusCode = 200;
-      response.setHeader("Content-Type", "application/json");
-      response.write(JSON.stringify({ authors: authors }));
-      response.end();
+      responseFunc(response, 200, JSON.stringify({ authors: authors }));
     });
   }
 });
