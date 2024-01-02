@@ -52,17 +52,36 @@ const server = http.createServer((request, response) => {
               });
             }
           });
+        } else if (url.includes("?fiction=")) {
+          const isFiction = url.split('=')[1] === 'true'? true : false;
+          const filteredBooks = books.filter((book)=> book.isFiction === isFiction);
+          if (filteredBooks.length > 0) {
+            response.statusCode = 200;
+            response.setHeader("Content-Type", "application/json");
+            response.write(JSON.stringify({ book: filteredBooks }));
+            response.end();
+          } else {
+            response.statusCode = 204;
+            response.end();
+          }
         } else {
           const bookId = url.split("/")[url.split("/").length - 1];
-
-          books.forEach((book) => {
-            if (book.bookId === Number(bookId)) {
-              response.statusCode = 200;
-              response.setHeader("Content-Type", "application/json");
-              response.write(JSON.stringify({ book: book }));
-              response.end();
-            }
+          const doesntExist = books.every((book) => {
+            return book.bookId !== Number(bookId);
           });
+          if (doesntExist) {
+            response.statusCode = 404;
+            response.end();
+          } else {
+            books.forEach((book) => {
+              if (book.bookId === Number(bookId)) {
+                response.statusCode = 200;
+                response.setHeader("Content-Type", "application/json");
+                response.write(JSON.stringify({ book: book }));
+                response.end();
+              }
+            });
+          }
         }
       }
     });
@@ -89,7 +108,7 @@ const server = http.createServer((request, response) => {
           ).then(() => {
             response.statusCode = 200;
             response.setHeader("Content-Type", "application/json");
-            response.write(JSON.stringify({ books: allBooks }));
+            response.write(JSON.stringify({ books: newBook }));
             response.end();
           });
         } else {
