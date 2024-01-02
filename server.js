@@ -1,26 +1,51 @@
 const http = require("http");
 const fs = require("fs/promises");
 
+const readContent = async (filename) => {
+  const getInfo = await fs.readFile(`./${filename}`, `utf8`);
+  return getInfo;
+};
+
 const server = http.createServer((request, response) => {
   const { method, url } = request;
-  console.log(method);
-  console.log(url);
   if (url === "/api" && method === "GET") {
     response.statusCode = 200;
     response.setHeader("Content-Type", "application/json");
     response.write(JSON.stringify({ message: "Hello!" }));
     response.end();
   }
-  if (url === "/api/books" && method === "GET") {
-    const readContent = async (filename) => {
-      const getInfo = await fs.readFile(`./${filename}`, `utf8`);
-      return getInfo;
-    };
+
+  if (url.includes("/api/books") && method === "GET") {
     readContent("./data/books.json").then((data) => {
       const books = JSON.parse(data);
+
+      if (url === "/api/books"){
+        response.statusCode = 200;
+        response.setHeader("Content-Type", "application/json");
+        response.write(JSON.stringify({ books: books }));
+        response.end();
+      } else {
+        const bookId = url.split("/")[url.split("/").length - 1];
+        
+        books.forEach((book) => { 
+          if (book.bookId === Number(bookId)){
+            response.statusCode = 200;
+            response.setHeader("Content-Type", "application/json");
+            response.write(JSON.stringify({ book: book }));
+            response.end();
+          }
+        })
+      }
+
+    });
+  }
+
+  if (url === "/api/authors" && method === "GET") {
+    readContent("./data/authors.json").then((data) => {
+      const authors = JSON.parse(data);
       response.statusCode = 200;
       response.setHeader("Content-Type", "application/json");
-      response.write(JSON.stringify({ books: books }));
+      response.write(JSON.stringify({ authors: authors }));
       response.end();
     });
   }
