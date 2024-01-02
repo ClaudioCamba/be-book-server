@@ -53,17 +53,22 @@ const server = http.createServer((request, response) => {
             }
           });
         } else if (url.includes("?fiction=")) {
-          const isFiction = url.split('=')[1] === 'true'? true : false;
-          const filteredBooks = books.filter((book)=> book.isFiction === isFiction);
-          if (filteredBooks.length > 0) {
-            response.statusCode = 200;
-            response.setHeader("Content-Type", "application/json");
-            response.write(JSON.stringify({ book: filteredBooks }));
-            response.end();
-          } else {
+          const fictionQuery = url.split("=")[1]
+          if(fictionQuery === "true" || fictionQuery === "false"){
+            const isFiction = fictionQuery === "true" ? true : false;
+            const filteredBooks = books.filter(
+              (book) => book.isFiction === isFiction
+            );
+            if (filteredBooks.length > 0) {
+              response.statusCode = 200;
+              response.setHeader("Content-Type", "application/json");
+              response.write(JSON.stringify({ book: filteredBooks }));
+              response.end();
+            }
+          }
             response.statusCode = 204;
             response.end();
-          }
+
         } else {
           const bookId = url.split("/")[url.split("/").length - 1];
           const doesntExist = books.every((book) => {
@@ -93,29 +98,39 @@ const server = http.createServer((request, response) => {
       body += packet;
     });
     request.on("end", () => {
-      readContent("./data/books.json").then((fileContents) => {
-        const allBooks = JSON.parse(fileContents);
-        const newBook = JSON.parse(body);
-        const doesntExist = allBooks.every((book) => {
-          return book.bookId !== newBook.bookId;
-        });
-        if (doesntExist) {
-          allBooks.push(JSON.parse(body));
-          fs.writeFile(
-            "./data/books.json",
-            JSON.stringify(allBooks),
-            "utf8"
-          ).then(() => {
-            response.statusCode = 200;
-            response.setHeader("Content-Type", "application/json");
-            response.write(JSON.stringify({ books: newBook }));
-            response.end();
-          });
-        } else {
-          response.statusCode = 409;
-          response.end();
+      const newBook = JSON.parse(body);
+      const hasKeys = ["bookId", "bookTitle", "authorId", "isFiction"].every(
+        (key) => {
+          return newBook.hasOwnProperty(key);
         }
-      });
+      );
+      if (!hasKeys) {
+        response.statusCode = 400;
+        response.end();
+      } else {
+        readContent("./data/books.json").then((fileContents) => {
+          const allBooks = JSON.parse(fileContents);
+          const doesntExist = allBooks.every((book) => {
+            return book.bookId !== newBook.bookId;
+          });
+          if (doesntExist) {
+            allBooks.push(JSON.parse(body));
+            fs.writeFile(
+              "./data/books.json",
+              JSON.stringify(allBooks),
+              "utf8"
+            ).then(() => {
+              response.statusCode = 200;
+              response.setHeader("Content-Type", "application/json");
+              response.write(JSON.stringify({ books: newBook }));
+              response.end();
+            });
+          } else {
+            response.statusCode = 409;
+            response.end();
+          }
+        });
+      }
     });
   }
 
